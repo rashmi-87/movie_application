@@ -1,4 +1,4 @@
-import { AppBar, Toolbar, Typography, Button, Box, Dialog, DialogTitle, DialogContent, DialogActions, IconButton } from '@mui/material'
+import { AppBar, Toolbar, Typography, Button, Box, Dialog, DialogTitle, DialogContent, DialogActions, IconButton, Drawer, List, ListItemButton, ListItemText, Divider } from '@mui/material'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import api from '../services/api'
@@ -20,6 +20,7 @@ const Navbar = () => {
   }
 
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
 
   const confirmImport = async () => {
     setConfirmOpen(false)
@@ -80,8 +81,54 @@ const Navbar = () => {
             </>
           )}
         </Box>
+        <Box sx={{ display: { xs: 'flex', md: 'none' } }}>
+          <IconButton color="inherit" onClick={() => setMobileOpen(true)}>
+            <MenuIcon />
+          </IconButton>
+        </Box>
       </Toolbar>
     </AppBar>
+
+    <Drawer anchor="right" open={mobileOpen} onClose={() => setMobileOpen(false)}>
+      <Box sx={{ width: 260 }}>
+        <List>
+          <ListItemButton component={Link} to="/" onClick={() => setMobileOpen(false)}>
+            <ListItemText primary="Home" />
+          </ListItemButton>
+          <ListItemButton component={Link} to="/search" onClick={() => setMobileOpen(false)}>
+            <ListItemText primary="Search" />
+          </ListItemButton>
+          {isAuthenticated ? (
+            <>
+              {user?.role === 'admin' && (
+                <>
+                  <ListItemButton component={Link} to="/admin/add-movie" onClick={() => setMobileOpen(false)}>
+                    <ListItemText primary="Add Movie" />
+                  </ListItemButton>
+                  <ListItemButton onClick={() => { setMobileOpen(false); handleBulkImport() }}>
+                    <ListItemText primary="Import Top 250" />
+                  </ListItemButton>
+                </>
+              )}
+              <Divider />
+              <ListItemButton onClick={() => { setMobileOpen(false); handleLogout() }}>
+                <ListItemText primary="Logout" />
+              </ListItemButton>
+            </>
+          ) : (
+            <>
+              <Divider />
+              <ListItemButton component={Link} to="/login" onClick={() => setMobileOpen(false)}>
+                <ListItemText primary="Login" />
+              </ListItemButton>
+              <ListItemButton component={Link} to="/register" onClick={() => setMobileOpen(false)}>
+                <ListItemText primary="Register" />
+              </ListItemButton>
+            </>
+          )}
+        </List>
+      </Box>
+    </Drawer>
 
     <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
       <DialogTitle>Import IMDb Top 250</DialogTitle>
