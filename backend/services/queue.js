@@ -22,18 +22,22 @@ const redisConfig = {
 };
 
 // Allow using a single REDIS_URL
-const redisOption = process.env.REDIS_URL ? process.env.REDIS_URL : redisConfig;
+const redisUrl = process.env.REDIS_URL;
 
 // Safe config log
 try {
-  const logPayload = process.env.REDIS_URL
-    ? { url: 'REDIS_URL', tls: !!(redisConfig.tls) }
-    : { host: redisConfig.host, port: redisConfig.port, hasPassword: !!redisConfig.password, tls: !!(redisConfig.tls) };
-  console.log('🔗 Redis config:', logPayload);
+  if (redisUrl) {
+    console.log('🔗 Redis config: Using REDIS_URL');
+  } else {
+    console.log('🔗 Redis config:', { 
+      host: redisConfig.host, 
+      port: redisConfig.port, 
+      hasPassword: !!redisConfig.password 
+    });
+  }
 } catch (_) {}
 
-export const movieQueue = new Queue('movie processing', {
- redis: process.env.REDIS_URL || redisConfig,
+const commonQueueOptions = {
   defaultJobOptions: {
     removeOnComplete: 50,
     removeOnFail: 10,
@@ -47,7 +51,12 @@ export const movieQueue = new Queue('movie processing', {
     stalledInterval: 30 * 1000,
     maxStalledCount: 1,
   }
-});
+};
+
+// Initialize Queue: Use REDIS_URL if available (Production), otherwise use individual config (Local)
+export const movieQueue = redisUrl
+  ? new Queue('movie processing', redisUrl, commonQueueOptions)
+  : new Queue('movie processing', { redis: redisConfig, ...commonQueueOptions });
 
 movieQueue.client.on('connect', () => {
   console.log('✅ Redis connected successfully!');
