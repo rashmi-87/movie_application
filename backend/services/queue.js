@@ -21,10 +21,10 @@ const redisConfig = {
   tls: process.env.REDIS_TLS === 'true' ? {} : undefined
 };
 
-// Allow using a single REDIS_URL (e.g., rediss://:password@host:port) if provided
+// Allow using a single REDIS_URL
 const redisOption = process.env.REDIS_URL ? process.env.REDIS_URL : redisConfig;
 
-// Safe config log (do not print secrets)
+// Safe config log
 try {
   const logPayload = process.env.REDIS_URL
     ? { url: 'REDIS_URL', tls: !!(redisConfig.tls) }
@@ -33,7 +33,7 @@ try {
 } catch (_) {}
 
 export const movieQueue = new Queue('movie processing', {
-  redis: redisConfig,
+ redis: process.env.REDIS_URL || redisConfig,
   defaultJobOptions: {
     removeOnComplete: 50,
     removeOnFail: 10,
@@ -71,7 +71,7 @@ movieQueue.process('createMovie', async (job) => {
           i: movieData.imdbID,
           apikey: OMDB_API_KEY
         },
-        timeout: 10000 // 10 second timeout
+        timeout: 10000 
       });
       const data = response.data;
 
